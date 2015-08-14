@@ -9,8 +9,6 @@
 
 module.exports = function(grunt) {
 
-  console.log("update/Gruntfile");
-
   var sshconfig = {};
   var wordpressdeploy = {
     options: {
@@ -135,7 +133,7 @@ module.exports = function(grunt) {
   });
 
   // Loud our tasks
-  grunt.loadTasks('tasks');
+  grunt.loadTasks('node_modules/grunt-wordpress-update/tasks');
  
   // Load dependancy tasks
   grunt.loadTasks('node_modules/grunt-wordpress-update/node_modules/grunt-wordpress-deploy/tasks');

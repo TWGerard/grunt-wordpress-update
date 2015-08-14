@@ -12,9 +12,6 @@ var grunt = require('grunt');
 
 module.exports = function(grunt) {
 
-  console.log("update/tasks/wordpressupdate.js");
-
-
   grunt.registerTask('pull_site', 'pulls the files and DB from the remote server', function() {
     var target = grunt.option('target') || task_options['target'];
     if ( typeof target === "undefined" || typeof grunt.config.get('wordpressdeploy')[target] === "undefined" || target === "local")  {
