@@ -14,7 +14,7 @@ module.exports = function(grunt) {
     options: {
       backup_dir: "backups/",
       rsync_args: ['--verbose', '--progress', '-rlpt', '--compress', '--omit-dir-times', '--delete'],
-      exclusions: ['Gruntfile.js', '.git/', 'tmp/*', 'backups/', 'wp-config.php', '.htaccess', 'cap/', 'composer.json', 'composer.lock', 'README.md', '.gitignore', 'package.json', 'node_modules']
+      exclusions: ['Gruntfile.js', '.git/', 'tmp/*', 'backups/', 'wp-config.php', '.htaccess', 'wp-content/uploads', 'cap/', 'composer.json', 'composer.lock', 'README.md', '.gitignore', 'package.json', 'node_modules']
     },
   };
 
@@ -41,6 +41,7 @@ module.exports = function(grunt) {
   }
  
   grunt.initConfig({
+    git_repo: git_repo,
     wordpressdeploy: wordpressdeploy,
     sshconfig: sshconfig,
     sshexec: {
