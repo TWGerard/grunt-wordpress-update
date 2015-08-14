@@ -134,15 +134,14 @@ module.exports = function(grunt) {
     }
   });
 
-  //grunt.loadTasks('tasks');
+  // Loud our tasks
+  grunt.loadTasks('tasks');
  
-  // Load tasks
+  // Load dependancy tasks
   grunt.loadTasks('node_modules/grunt-wordpress-update/node_modules/grunt-wordpress-deploy/tasks');
   grunt.loadTasks('node_modules/grunt-wordpress-update/node_modules/grunt-ssh/tasks');
-  //grunt.loadNpmTasks('grunt-wordpress-deploy');
-  //grunt.loadNpmTasks('grunt-ssh');
  
-  // Register tasks 
+  // Register default task
   grunt.registerTask('default', ['sshexec:git_status']);
 
 };

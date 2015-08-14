@@ -54,10 +54,5 @@ module.exports = function(grunt) {
   // Load WordPress Updater
   var updater = require('grunt-wordpress-update');
   updater(grunt);
- 
-  // Register default task 
-  grunt.registerTask('default', [
-    'sshexec:git_status'
-  ]);
 };
 ```
