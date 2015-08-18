@@ -31,7 +31,9 @@ module.exports = function(grunt) {
       agentForward: true
     };
     wordpressdeploy[server.title] = server;
-    wordpressdeploy[server.title].ssh_host = server.ssh_user + "@" + server.ssh_host;
+    if (server.ssh_user && server.ssh_host) {
+      wordpressdeploy[server.title].ssh_host = server.ssh_user + "@" + server.ssh_host;
+    }
   }
 
   // Skip repo stuff if we have a repo
