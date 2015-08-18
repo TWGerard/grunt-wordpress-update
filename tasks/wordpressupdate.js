@@ -110,8 +110,20 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('update_wp_core', 'updates the WordPress core to the latest version', function() {
-    // Not yet available!
-    grunt.fail.warn("I would like to automate update of the WP Core and plugins, but time is short so do it yourself.", 6);
+    shell.cd(servers['local']['path']);
+    shell.exec('git clone --depth=1 '+(grunt.config('wordpressupdate').wp_version ? '-b '+grunt.config('wordpressupdate').wp_version+'-branch ' : '')+'https://github.com/WordPress/WordPress.git temp');
+    shell.rm('-rf', 'temp/wp-content');
+    shell.rm('-rf', 'temp/.git');
+    shell.rm('-rf', 'wp-admin');
+    shell.rm('-rf', 'wp-includes');
+    shell.exec('mv -f ./temp/* ./');
+    //shell.rm('-rf', 'temp');
+
+    grunt.fail.warn("Navigate to " + servers['local'].url + "/wp-admin/upgrade.php in your browser to complete update.");
+  });
+
+  grunt.registerTask('update_wp_plugins', 'updates WordPress plugins', function() {
+    grunt.fail.warn("I would like to automate update of the WP plugins, but time is short so do it yourself.", 6);
   });
 
   grunt.registerTask('close_permissions', 'resets wp-content permissions to production-ready values', function() {
