@@ -93,7 +93,7 @@ module.exports = function(grunt) {
       shell.cd('wp-content');
       shell.exec('git clone ' + git_repo + ' .');
       shell.exec('git checkout ' + server.git_branch);
-    } else if (local_origin.output !== git_repo) {
+    } else if (local_origin.output.trim() !== git_repo) {
       grunt.fail.warn("Local origin is wrong! Expected '" + git_repo + "', but found '" + local_origin.output + "'.\n", 6);
     } else {
       shell.exec('git remote update');
