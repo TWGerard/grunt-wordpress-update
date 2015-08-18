@@ -17,6 +17,27 @@ module.exports = function(grunt) {
   var servers = grunt.config('wordpressupdate')['servers'];
   var server = servers[target];
 
+
+  grunt.registerTask('wordpress_update', 'pulls, updates, and pushes a WordPress installation', function() {
+    grunt.task.run('pull_site');
+    grunt.task.run('open_permissions');
+    grunt.task.run('update_wp_core');
+    grunt.task.run('close_permissions');
+    grunt.task.run('push_site');
+  });
+
+  grunt.registerTask('pull_and_open_site', 'pulls site and opens permissions', function() {
+    grunt.task.run('pull_site');
+    grunt.task.run('open_permissions');
+  });
+
+  grunt.registerTask('close_and_push_site', 'closes permissions and pushes site', function() {
+    grunt.task.run('close_permissions');
+    grunt.task.run('push_site');
+  });
+
+
+
   grunt.registerTask('pull_site', 'pulls the files and DB from the remote server', function() {
     if ( typeof target === "undefined" || typeof server === "undefined" || target === "local")  {
       grunt.fail.warn("Invalid target specified. Did you pass the wrong argument? Please check your task configuration.", 6);
@@ -34,6 +55,29 @@ module.exports = function(grunt) {
     if (git_repo) {
       grunt.task.run('sshexec:check_content_repo_url');
       grunt.task.run('pull_content_repo');
+    }
+  });
+
+  grunt.registerTask('check_wp_config', 'checks for and creates (if necessary) the wp-config.php file', function() {
+    shell.cd(servers['local'].path);
+    var has_config = shell.exec('ls wp-config.php');
+    has_config = !has_config.code;
+
+    if (!has_config) {
+      var has_sample_config = shell.exec('ls wp-config-sample.php');
+      if (has_sample_config.code !== 0) {
+        grunt.fail.warn("Missing local wp-config.php AND wp-config-sample.php");
+      }
+
+      var wp_config = grunt.file.read('wp-config-sample.php');
+      wp_config = wp_config.replace('database_name_here', servers['local'].database);
+      wp_config = wp_config.replace('username_here', servers['local'].user);
+      wp_config = wp_config.replace('password_here', servers['local'].pass);
+      wp_config = wp_config.replace('localhost', servers['local'].host);
+      wp_config = wp_config.replace('wp_', grunt.config('wordpressupdate')['wp_prefix']);
+      wp_config = wp_config.replace("define('DB_COLLATE', '');", "define('DB_COLLATE', '');\n\ndefine('FS_METHOD', 'direct');");
+      console.log("Creating wp-config.php from wp-config-sample.php using Grunt settings.");
+      grunt.file.write('wp-config.php', wp_config);
     }
   });
 
@@ -58,34 +102,16 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('check_wp_config', 'checks for and creates (if necessary) the wp-config.php file', function() {
-    shell.cd(servers['local'].path);
-    var has_config = shell.exec('ls wp-config.php');
-    has_config = !has_config.code;
-
-    if (!has_config) {
-      var has_sample_config = shell.exec('ls wp-config-sample.php');
-      if (has_sample_config.code !== 0) {
-        grunt.fail.warn("Missing local wp-config.php AND wp-config-sample.php");
-      }
-
-      var wp_config = grunt.file.read('wp-config-sample.php');
-      wp_config = wp_config.replace('database_name_here', servers['local'].database);
-      wp_config = wp_config.replace('username_here', servers['local'].user);
-      wp_config = wp_config.replace('password_here', servers['local'].pass);
-      wp_config = wp_config.replace('localhost', servers['local'].host);
-      wp_config = wp_config.replace('wp_', grunt.config('wordpressupdate')['wp_prefix']);
-      wp_config = wp_config.replace("define('WP_DEBUG', false);", "define('WP_DEBUG', true);");
-      console.log("Creating wp-config.php from wp-config-sample.php using Grunt settings.");
-      grunt.file.write('wp-config.php', wp_config);
-    }
-  });
-
   grunt.registerTask('open_permissions', 'sets wp-content permissions to be open enough for WP auto-updates', function() {
     shell.cd(servers['local']['path'] + '/wp-content');
     shell.mkdir('uploads');
     shell.mkdir('upgrade');
     shell.exec('sudo find . -type d -exec chmod 777 {} +');
+  });
+
+  grunt.registerTask('update_wp_core', 'updates the WordPress core to the latest version', function() {
+    // Not yet available!
+    grunt.fail.warn("I would like to automate update of the WP Core and plugins, but time is short so do it yourself.", 6);
   });
 
   grunt.registerTask('close_permissions', 'resets wp-content permissions to production-ready values', function() {
@@ -95,7 +121,26 @@ module.exports = function(grunt) {
     shell.exec('sudo chown -R ' + servers['local'].file_owner + ":" + servers['local'].file_group + ' .');
   });
 
-  grunt.registerTask('push_site', 'pushes the WP Core and Plugins to the remote server', function() {
+  grunt.registerTask('push_content_repo', 'commits and pushes the local repo', function() {
+    shell.cd(servers['local']['path'] + '/wp-content');
+    // Should check origin and branch first
+    shell.exec('git add -A');
+    shell.exec('git commit -m "Updated WP plugins."');
+    shell.exec('git remote update');
+    shell.exec('git push origin ' + server.git_branch);
+  });
 
+  grunt.registerTask('push_site', 'pushes the site to the remote server', function() {
+    console.log("pushing site to " + target);
+    // Pull database
+    grunt.task.run('push_db');
+    grunt.task.run('sshexec:check_for_wp_repo');
+    grunt.task.run('sshexec:check_for_cap');
+
+    grunt.task.run('push_files');
+    if (git_repo) {
+      grunt.task.run('push_content_repo');
+      grunt.task.run('sshexec:pull_content_repo');
+    }
   });
 };

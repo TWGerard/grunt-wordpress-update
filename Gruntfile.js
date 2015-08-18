@@ -212,6 +212,17 @@ module.exports = function(grunt) {
           config: (grunt.option('target') || task_options['target']),
         }
       },
+      pull_content_repo: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + 'wp-content',
+          'git remote update',
+          'git checkout ' + servers[grunt.option('target')].git_branch,
+          'git pull origin ' + servers[grunt.option('target')].git_branch
+        ].join(' && '),
+        options: {
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
     }
   });
 
