@@ -13,8 +13,8 @@ module.exports = function(grunt) {
   var wordpressdeploy = {
     options: {
       backup_dir: "backups/",
-      rsync_args: ['--verbose', '--progress', '-rlpt', '--compress', '--omit-dir-times', '--delete'],
-      exclusions: ['Gruntfile.js', '.git/', 'tmp/*', 'backups/', 'wp-config.php', '.htaccess', 'wp-content/uploads', 'cap/', 'composer.json', 'composer.lock', 'README.md', '.gitignore', 'package.json', 'node_modules']
+      rsync_args: ['-rlpt', '--compress', '--omit-dir-times', '--delete'],
+      exclusions: ['Gruntfile.js', '.git/', 'tmp/*', 'backups/', 'wp-config.php', '.htaccess', 'wp-content/uploads', 'wp-content/upgrade', 'cap/', 'composer.json', 'composer.lock', 'README.md', '.gitignore', 'package.json', 'node_modules']
     },
   };
 
@@ -42,6 +42,7 @@ module.exports = function(grunt) {
  
   grunt.initConfig({
     git_repo: git_repo,
+    wordpressupdate: grunt.config.get('wordpressupdate'),
     wordpressdeploy: wordpressdeploy,
     sshconfig: sshconfig,
     sshexec: {
@@ -56,15 +57,6 @@ module.exports = function(grunt) {
             console.log("CALLBACK");
             console.log(stdout);
           },
-          config: (grunt.option('target') || task_options['target']),
-        }
-      },
-      git_push: {
-        command: [
-          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + '/wp-content',
-          //'git push origin ' + servers[(grunt.option('target') || task_options['target'])].git_branch
-        ].join(' && '),
-        options: {
           config: (grunt.option('target') || task_options['target']),
         }
       },
@@ -110,6 +102,22 @@ module.exports = function(grunt) {
           config: (grunt.option('target') || task_options['target']),
         }
       },
+      check_cap_repo_url: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + '/cap/shared/cached-copy',
+          'git config --get remote.origin.url'
+        ].join(' && ' ),
+        options: {
+          callback: function(stdout) {
+            if (stdout !== git_repo) {
+              throw "Capistrano has wrong git repo. Expected " + git_repo + ", found " + stdout;
+            } else {
+              grunt.task.run('sshexec:clean_cap');
+            }
+          },
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
       clean_cap: {
         command: [
           'cd ' + servers[(grunt.option('target') || task_options['target'])].path,
@@ -125,8 +133,82 @@ module.exports = function(grunt) {
           'rm -rf cap'
         ].join(' && '),
         options: {
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
+      check_content_repo_url: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + 'wp-content',
+          'git config --get remote.origin.url'
+        ].join(' && '),
+        options: {
           callback: function(stdout) {
+            if (stdout !== git_repo) {
+              throw grunt.option('target') + ' repo URL is ' + stdout + '. Expected ' + git_repo;
+            } else {
+              grunt.task.run('sshexec:check_content_repo_branch');
+            }
+            grunt.config('test', 'balls');
           },
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
+      check_content_repo_branch: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + 'wp-content',
+          'git rev-parse --abbrev-ref HEAD'
+        ].join(' && '),
+        options: {
+          callback: function(stdout) {
+            var git_branch = servers[grunt.option('target')].git_branch;
+            if (stdout !== git_branch) {
+              throw 'Active branch on ' + grunt.option('target') + ' is ' + stdout + '. Expected ' + git_branch;
+            } else {
+              grunt.task.run('sshexec:check_content_repo');
+            }
+            grunt.config('test', 'balls');
+          },
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
+      check_content_repo: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + 'wp-content',
+          'git status'
+        ].join(' && '),
+        options: {
+          callback: function(stdout) {
+            if (stdout !== "nothing to commit (working directory clean)") {
+              throw 'Uncommited changes on ' + grunt.option('target')
+            } else {
+              grunt.task.run('sshexec:check_content_repo_diff');
+            }
+          },
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
+      check_content_repo_diff: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + 'wp-content',
+          'git remote update',
+          'git diff origin/' + servers[grunt.option('target')].git_branch + ' --raw | cat'
+        ].join(' && '),
+        options: {
+          callback: function(stdout) {
+            if (stdout !== "" && stdout !== "Fetching origin") {
+              console.log(stdout);
+              grunt.fail.warn('Unpushed changes on ' + grunt.option('target'), 6);
+            }
+          },
+          config: (grunt.option('target') || task_options['target']),
+        }
+      },
+      push_content_repo: {
+        command: [
+          'cd ' + servers[(grunt.option('target') || task_options['target'])].path + 'wp-content',
+          ''
+        ].join(' && '),
+        options: {
           config: (grunt.option('target') || task_options['target']),
         }
       },
