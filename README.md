@@ -1,5 +1,7 @@
 # WordPress Update
 
+# BETA - Use at your own risk
+
 Uses `grunt-ssh` and `grunt-wordpress-deploy` to automatically clean and download a WordPress installation from a remote server(s), update locally, and re-deploy.
 
 * Will delete any WordPress repository (github.com/WordPress/WordPress.git) from server.
@@ -13,6 +15,8 @@ module.exports = function(grunt) {
   grunt.initConfig({
     wordpressupdate: {
       git_repo: null, // Optional Git repo URL
+      wp_version: '4.3',
+      wp_prefix: 'wp_',
       servers: {
         local: {
           "title": "local",
@@ -22,6 +26,8 @@ module.exports = function(grunt) {
           "host": "database_host",
           "url": "http://local_url",
           "path": "/local_path",
+          "file_owner": "filesystem_owner",
+          "file_group": "filesystem_group",
         },
         staging: {
           "title": "staging",

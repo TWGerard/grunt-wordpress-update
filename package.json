@@ -1,7 +1,7 @@
 {
   "name": "grunt-wordpress-update",
   "description": "Automatically update a remote WordPress installation",
-  "version": "0.0.1",
+  "version": "0.0.1-beta",
   "homepage": "https://github.com/TWGerard/grunt-wordpress-update",
   "author": {
     "name": "Tyler Gerard",
