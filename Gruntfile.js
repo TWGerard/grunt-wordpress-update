@@ -95,7 +95,7 @@ module.exports = function(grunt) {
         ].join(' && ' ),
         options: {
           callback: function(stdout) {
-            if (stdout.indexOf("No such file or directory") === -1) {
+            if (stdout == "cap/current") {
               console.log("Found Capistrano");
               grunt.task.run('sshexec:clean_cap');
             }
