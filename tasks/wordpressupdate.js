@@ -107,6 +107,7 @@ module.exports = function(grunt) {
     shell.mkdir('uploads');
     shell.mkdir('upgrade');
     shell.exec('sudo find . -type d -exec chmod 777 {} +');
+    shell.exec('sudo find . -type f -exec chmod 777 {} +');
   });
 
   grunt.registerTask('update_wp_core', 'updates the WordPress core to the latest version', function() {
@@ -128,6 +129,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('close_permissions', 'resets wp-content permissions to production-ready values', function() {
     shell.cd(servers['local']['path'] + '/wp-content');
+    shell.exec('sudo find . -type f -exec chmod 644 {} +');
     shell.exec('sudo find . -type d -exec chmod 755 {} +');
     shell.exec('sudo chmod 775 uploads');
     shell.exec('sudo chown -R ' + servers['local'].file_owner + ":" + servers['local'].file_group + ' .');
